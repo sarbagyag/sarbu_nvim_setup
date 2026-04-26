@@ -55,7 +55,7 @@ require("lazy").setup({
     opts = {
       open_mapping = [[<C-\>]],
       direction = "horizontal",
-      size = 15,
+      size = 22,
     },
   },
 
@@ -271,7 +271,6 @@ vim.api.nvim_create_autocmd("BufWritePre", {
   end,
 })
 
------------------------------------------------------------
 -- KEYMAPS
 -----------------------------------------------------------
 -- Escape

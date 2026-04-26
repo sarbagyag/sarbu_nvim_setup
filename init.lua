@@ -19,7 +19,7 @@ vim.opt.rtp:prepend(lazypath)
 -----------------------------------------------------------
 vim.g.mapleader = " "
 vim.opt.number         = true
-vim.opt.relativenumber = true
+vim.opt.relativenumber = false
 vim.opt.tabstop        = 2
 vim.opt.shiftwidth     = 2
 vim.opt.expandtab      = true
@@ -44,9 +44,7 @@ require("lazy").setup({
         background = { dark = "wave" },
       })
       vim.opt.background = "dark"
-      vim.defer_fn(function()
-        vim.cmd.colorscheme("kanagawa")
-      end, 0)
+      vim.cmd.colorscheme("kanagawa")
     end,
   },
 
@@ -81,10 +79,48 @@ require("lazy").setup({
     },
   },
 
+  -- Icons (needed for file tree + lualine)
+  { "nvim-tree/nvim-web-devicons", opts = {} },
+
   -- File tree
   {
     "nvim-tree/nvim-tree.lua",
-    opts = { view = { width = 30 } },
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      view = { width = 30 },
+      renderer = {
+        icons = {
+          show = {
+            file         = true,
+            folder       = true,
+            folder_arrow = true,
+            git          = true,
+          },
+          glyphs = {
+            default = "",
+            symlink = "",
+            folder = {
+              arrow_closed = "",
+              arrow_open   = "",
+              default      = "",
+              open         = "",
+              empty        = "",
+              empty_open   = "",
+              symlink      = "",
+            },
+            git = {
+              unstaged  = "",
+              staged    = "",
+              unmerged  = "",
+              renamed   = "",
+              untracked = "",
+              deleted   = "",
+              ignored   = "",
+            },
+          },
+        },
+      },
+    },
   },
 
   -- Fuzzy finder
@@ -121,6 +157,11 @@ require("lazy").setup({
     config = function()
       local cmp = require("cmp")
       cmp.setup({
+        completion = {
+          autocomplete = {
+            require("cmp.types").cmp.TriggerEvent.TextChanged,
+          },
+        },
         snippet = {
           expand = function(args)
             require("luasnip").lsp_expand(args.body)
@@ -145,6 +186,24 @@ require("lazy").setup({
 
   -- Git signs
   { "lewis6991/gitsigns.nvim", opts = {} },
+
+  -- Auto-close brackets, quotes, etc.
+  {
+    "windwp/nvim-autopairs",
+    event = "InsertEnter",
+    config = function()
+      local autopairs = require("nvim-autopairs")
+      autopairs.setup({
+        check_ts = true,
+        fast_wrap = {},
+      })
+      local ok, cmp = pcall(require, "cmp")
+      if ok then
+        local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+        cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
+      end
+    end,
+  },
 
   -- Go extras
   {
@@ -203,10 +262,26 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 })
 
 -----------------------------------------------------------
+-- C/C++: format on save (via clangd)
+-----------------------------------------------------------
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = { "*.c", "*.h", "*.cpp", "*.hpp", "*.cc", "*.cxx" },
+  callback = function()
+    vim.lsp.buf.format({ async = false })
+  end,
+})
+
+-----------------------------------------------------------
 -- KEYMAPS
 -----------------------------------------------------------
 -- Escape
 vim.keymap.set("i", "jk", "<Esc>")
+
+-- Window navigation (replaces <C-w> prefix)
+vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Go to left window" })
+vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Go to lower window" })
+vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Go to upper window" })
+vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Go to right window" })
 
 -- File tree
 vim.keymap.set("n", "<leader>e", "<cmd>NvimTreeToggle<cr>")
